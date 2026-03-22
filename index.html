@@ -756,10 +756,10 @@
     <span class="nav-icon">✅</span>Hoy
   </button>
   <button class="nav-btn" onclick="showView('semana', this)">
-    <span class="nav-icon">📅</span>Semana
+    <span class="nav-icon">🏋️</span>Ejercicio
   </button>
   <button class="nav-btn" onclick="showView('plan', this)">
-    <span class="nav-icon">🥗</span>Plan
+    <span class="nav-icon">🥗</span>Menú
   </button>
   <button class="nav-btn" onclick="showView('stats', this)">
     <span class="nav-icon">📊</span>Progreso
@@ -814,11 +814,6 @@
 <!-- VIEW: SEMANA -->
 <div class="view" id="view-semana">
   <div class="section" style="padding-top:14px">
-    <div class="section-label">Esta semana</div>
-  </div>
-  <div class="week-row" id="weekRow"></div>
-
-  <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-label" style="margin:0">Ejercicio semanal</div>
       <button onclick="toggleEjercicioEdit()" id="editEjBtn" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--accent);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">✏️ Editar</button>
@@ -839,7 +834,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <button onclick="changeMenuWeek(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;cursor:pointer;">‹</button>
       <div style="text-align:center;">
-        <div class="section-label" style="margin:0" id="menuWeekLabel">Semana 1</div>
+        <div class="section-label" style="margin:0" id="menuWeekLabel">Menú semana 1</div>
       </div>
       <button onclick="changeMenuWeek(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;cursor:pointer;">›</button>
     </div>
@@ -855,10 +850,15 @@
     <div id="menuEditor" style="display:none;margin-top:10px;">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;">
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
-          Pega el menú con este formato, un día por línea:<br>
-          <span style="color:var(--accent2);font-family:monospace;font-size:11px;">Lunes | comida | cena | snack</span>
+          Pega el menú con este formato:
+          <pre style="color:var(--accent2);font-size:11px;margin-top:6px;line-height:1.7;background:var(--bg);padding:8px;border-radius:8px;overflow:auto;">Lunes
+* Comida: ...
+* Cena: ...
+* Snack: ...
+Martes
+* Comida: ...</pre>
         </div>
-        <textarea id="menuPasteInput" placeholder="Lunes | Pollo 150g + brócoli | Salmón + calabacín | Huevo duro x2&#10;Martes | ..." style="width:100%;height:180px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;"></textarea>
+        <textarea id="menuPasteInput" placeholder="Lunes&#10;* Comida: Pollo 150g + brócoli&#10;* Cena: Sardinas + calabacín&#10;* Snack: Huevo duro x2&#10;Martes&#10;..." style="width:100%;height:180px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;"></textarea>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button onclick="saveNewMenuWeek()" style="flex:1;padding:12px;border-radius:10px;background:var(--accent);border:none;color:#0d0a0f;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Guardar semana</button>
           <button onclick="toggleMenuEditor()" style="padding:12px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancelar</button>
@@ -893,7 +893,7 @@
     <div class="stat-card">
       <div class="stat-num" id="statPorc">0%</div>
       <div class="stat-label">Reto completado</div>
-      <div class="stat-sub">de 215 días 🎯</div>
+      <div class="stat-sub">de 213 días 🎯</div>
     </div>
   </div>
 
@@ -1011,19 +1011,11 @@ const EJERCICIO = [
   { dia: 'Domingo', muscle: 'Descanso 🌿', cardio: '' },
 ];
 
-const MENU = [
-  { dia: 'Lunes', comida: 'Pollo 150g + brócoli 150g + quinoa 50g (cruda)', cena: 'Sardinas en lata 120g + calabacín 150g', snack: 'Huevo duro x2 + almendras 15g' },
-  { dia: 'Martes', comida: 'Calabacín relleno de pollo (1 calabacín grande + 150g pollo + verduras 100g)', cena: 'Tortilla 2 huevos + 1 clara + espinacas 100g + champiñones 100g', snack: 'Yogur vegetal sin azúcar 150g + nueces 15g' },
-  { dia: 'Miércoles', comida: 'Pollo 150g + brócoli 150g + quinoa 50g (cruda)', cena: 'Bacalao fresco 150g + puré calabaza 150g', snack: 'Almendras 10–15g + fruta 100g' },
-  { dia: 'Jueves', comida: 'Calabacín relleno de pollo (1 calabacín grande + 150g pollo + verduras 100g)', cena: 'Merluza 150g + espárragos 150g', snack: 'Huevo duro x2 + aguacate 50g' },
-  { dia: 'Viernes', comida: 'Salmón 150g + ensalada 150g hojas verdes + 50g tomate + 1 cda aceite oliva', cena: 'Revuelto verduras 150g + 2–3 huevos', snack: 'Yogur vegetal sin azúcar 150g + nueces 15g' },
-  { dia: 'Sábado', comida: '🎉 Comida libre (controlada)', cena: 'Tortilla 2 huevos + 1 clara + calabacín o espárragos 150g + 1 cda aceite oliva', snack: 'Opcional' },
-  { dia: 'Domingo', comida: 'Moluscos 150g + verduras 150g + boquerones en vinagre 80g', cena: 'Ensalada: bacalao ahumado 80g + aguacate 50g + hojas verdes 100g + 1 cda aceite oliva', snack: 'Almendras 15g' },
-];
+const MENU = []; // Los menús se gestionan desde la pantalla Menú
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const TARGET_DATE = new Date('2026-10-22T23:59:59');
-const START_DATE  = new Date('2026-03-21'); // inicio del reto
+const START_DATE  = new Date('2026-03-23'); // inicio del reto
 
 function todayKey() {
   const d = new Date();
@@ -1276,8 +1268,7 @@ function getMenuSemanas() {
     const saved = JSON.parse(localStorage.getItem('sopMenuSemanas') || 'null');
     if (saved && saved.length > 0) return saved;
   } catch(e) {}
-  // Default: week 1 from hardcoded MENU
-  return [{ label: 'Semana 1', dias: MENU }];
+  return [];
 }
 
 function saveMenuSemanas(arr) {
@@ -1286,6 +1277,16 @@ function saveMenuSemanas(arr) {
 
 function renderMenu() {
   const semanas = getMenuSemanas();
+
+  if (semanas.length === 0) {
+    document.getElementById('menuWeekLabel').textContent = 'Sin menú';
+    document.getElementById('menuList').innerHTML = `
+      <div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:13px;line-height:1.8;">
+        Aún no hay ningún menú.<br>Pulsa <strong style="color:var(--accent)">+ Añadir nueva semana</strong> y pega tu menú.
+      </div>`;
+    return;
+  }
+
   if (currentMenuWeek >= semanas.length) currentMenuWeek = semanas.length - 1;
   if (currentMenuWeek < 0) currentMenuWeek = 0;
 
@@ -1299,9 +1300,9 @@ function renderMenu() {
     el.className = 'menu-day';
     el.innerHTML = `
       <div class="mday">${m.dia}</div>
-      <div class="meal"><strong>Comida:</strong> ${m.comida}</div>
-      <div class="meal"><strong>Cena:</strong> ${m.cena}</div>
-      <div class="meal"><strong>Snack:</strong> ${m.snack}</div>
+      <div class="meal"><strong>🍽 Comida:</strong> ${m.comida}</div>
+      <div class="meal"><strong>🌙 Cena:</strong> ${m.cena}</div>
+      <div class="meal"><strong>🥜 Snack:</strong> ${m.snack}</div>
     `;
     list.appendChild(el);
   });
@@ -1325,23 +1326,56 @@ function saveNewMenuWeek() {
   const raw = document.getElementById('menuPasteInput').value.trim();
   if (!raw) return;
 
-  const DIAS_ORDER = ['Lunes','Martes','Miércoles','Miercoles','Jueves','Viernes','Sábado','Sabado','Domingo'];
+  const DIAS = ['Lunes','Martes','Miércoles','Miercoles','Jueves','Viernes','Sábado','Sabado','Domingo'];
+  const DIAS_NORM = { 'Miercoles': 'Miércoles', 'Sabado': 'Sábado' };
+
   const dias = [];
 
-  raw.split('\n').forEach(line => {
-    line = line.trim();
-    if (!line) return;
-    // Support separator | or tab or multiple spaces
-    const parts = line.split('|').map(p => p.trim());
-    if (parts.length >= 2) {
-      dias.push({
-        dia: parts[0] || '—',
-        comida: parts[1] || '—',
-        cena: parts[2] || '—',
-        snack: parts[3] || '—',
-      });
-    }
-  });
+  if (raw.includes('|')) {
+    // Pipe format: Lunes | comida | cena | snack
+    raw.split('\n').forEach(line => {
+      line = line.trim();
+      if (!line) return;
+      const parts = line.split('|').map(p => p.trim());
+      if (parts.length >= 2) {
+        dias.push({ dia: parts[0], comida: parts[1] || '—', cena: parts[2] || '—', snack: parts[3] || '—' });
+      }
+    });
+  } else {
+    // Bullet format:
+    // Lunes
+    // * Comida: ...
+    // * Cena: ...
+    // * Snack: ...
+    let current = null;
+    raw.split('\n').forEach(line => {
+      line = line.trim();
+      if (!line) return;
+
+      // Check if line is a day name
+      const isDia = DIAS.find(d => line === d || line.startsWith(d + ' '));
+      if (isDia) {
+        if (current) dias.push(current);
+        current = { dia: DIAS_NORM[isDia] || isDia, comida: '—', cena: '—', snack: '—' };
+        return;
+      }
+
+      if (!current) return;
+
+      // Strip bullet markers (* - •)
+      const clean = line.replace(/^[\*\-•]\s*/, '');
+
+      // Match field labels (case insensitive, with or without colon)
+      if (/^comida\s*:/i.test(clean)) {
+        current.comida = clean.replace(/^comida\s*:\s*/i, '').trim();
+      } else if (/^cena(\s+ligera)?\s*:/i.test(clean)) {
+        current.cena = clean.replace(/^cena(\s+ligera)?\s*:\s*/i, '').trim();
+      } else if (/^snack\s*:/i.test(clean)) {
+        current.snack = clean.replace(/^snack\s*:\s*/i, '').trim();
+      }
+    });
+    if (current) dias.push(current);
+  }
 
   if (dias.length === 0) {
     document.getElementById('menuPasteInput').style.borderColor = '#f87171';
@@ -1350,16 +1384,21 @@ function saveNewMenuWeek() {
 
   const semanas = getMenuSemanas();
   const newNum = semanas.length + 1;
-  semanas.push({ label: `Semana ${newNum}`, dias });
+  semanas.push({ label: `Menú semana ${newNum}`, dias });
   saveMenuSemanas(semanas);
   currentMenuWeek = semanas.length - 1;
 
-  // Hide editor
   document.getElementById('menuEditor').style.display = 'none';
   document.getElementById('menuEditorBtn').textContent = '+ Añadir nueva semana';
   document.getElementById('menuPasteInput').value = '';
 
   renderMenu();
+}
+
+function findSplitPoint(str, target) {
+  let i = target;
+  while (i < str.length && str[i] !== ' ') i++;
+  return i;
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
@@ -1388,7 +1427,7 @@ function updateStats() {
     else if (i > 0) break;
   }
 
-  const totalDias = 215;
+  const totalDias = 213;
   const msLeft = TARGET_DATE - new Date();
   const daysLeft = Math.max(0, Math.ceil(msLeft / 86400000));
   const done = totalDias - daysLeft;
@@ -1517,7 +1556,7 @@ function showView(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name === 'semana') { renderWeekRow(); renderEjercicio(); }
+  if (name === 'semana') { renderEjercicio(); }
   if (name === 'stats') updateStats();
   if (name === 'peso') renderPeso();
 }
