@@ -1077,11 +1077,13 @@ function initHeader() {
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────────
 function renderChecklist(section) {
-  const { day } = getDayState();
+  const s = getState();
+  const k = todayKey();
+  const checked = (s[k] && s[k].checked) ? s[k].checked : {};
   const list = document.getElementById('list-' + section);
   list.innerHTML = '';
   TASKS[section].forEach(item => {
-    const done = !!day.checked[item.id];
+    const done = !!checked[item.id];
     const el = document.createElement('div');
     el.className = 'check-item' + (done ? ' done' : '');
     el.innerHTML = `
@@ -1098,29 +1100,37 @@ function renderChecklist(section) {
 }
 
 function toggleItem(id, section) {
-  const { state, key, day } = getDayState();
-  day.checked[id] = !day.checked[id];
+  const s = getState();
+  const k = todayKey();
+  if (!s[k]) s[k] = { checked: {} };
+  if (!s[k].checked) s[k].checked = {};
+  // Toggle
+  s[k].checked[id] = !s[k].checked[id];
+  saveState(s);
   renderChecklist(section);
-  saveState(state);
   updateProgress();
   checkAllDone();
 }
 
 function updateProgress() {
-  const { day } = getDayState();
+  const s = getState();
+  const k = todayKey();
+  const checked = (s[k] && s[k].checked) ? s[k].checked : {};
   const allIds = [
     ...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche
   ].map(t => t.id);
   const total = allIds.length;
-  const done = allIds.filter(id => day.checked[id]).length;
+  const done = allIds.filter(id => !!checked[id]).length;
   document.getElementById('progressCount').textContent = `${done} / ${total}`;
-  document.getElementById('progressBar').style.width = `${(done/total)*100}%`;
+  document.getElementById('progressBar').style.width = `${(done / total) * 100}%`;
 }
 
 function checkAllDone() {
-  const { day } = getDayState();
-  const mainIds = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche].map(t => t.id);
-  const allDone = mainIds.every(id => day.checked[id]);
+  const s = getState();
+  const k = todayKey();
+  const checked = (s[k] && s[k].checked) ? s[k].checked : {};
+  const allIds = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche].map(t => t.id);
+  const allDone = allIds.every(id => !!checked[id]);
   if (allDone) {
     document.getElementById('overlay').classList.add('show');
     document.getElementById('celebrate').classList.add('show');
