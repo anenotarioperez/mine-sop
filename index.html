@@ -841,9 +841,20 @@
 
     <div id="menuList"></div>
 
-    <!-- Add new week button -->
-    <div style="margin-top:12px;">
-      <button onclick="toggleMenuEditor()" id="menuEditorBtn" style="width:100%;padding:13px;border-radius:12px;border:1px dashed rgba(192,132,252,0.4);background:transparent;color:var(--accent);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">+ Añadir nueva semana</button>
+    <!-- Add / delete week buttons -->
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button onclick="toggleMenuEditor()" id="menuEditorBtn" style="flex:1;padding:13px;border-radius:12px;border:1px dashed rgba(192,132,252,0.4);background:transparent;color:var(--accent);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">+ Añadir semana</button>
+      <button onclick="showDeleteConfirm()" style="padding:13px 16px;border-radius:12px;border:1px dashed rgba(248,113,113,0.4);background:transparent;color:#f87171;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">🗑</button>
+    </div>
+
+    <!-- Delete confirmation dialog -->
+    <div id="deleteConfirm" style="display:none;margin-top:10px;background:var(--surface2);border:1px solid rgba(248,113,113,0.3);border-radius:14px;padding:16px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">¿Borrar esta semana?</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="deleteConfirmLabel"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="confirmDeleteWeek()" style="flex:1;padding:11px;border-radius:10px;background:#f87171;border:none;color:#0d0a0f;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Sí, borrar</button>
+        <button onclick="hideDeleteConfirm()" style="flex:1;padding:11px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancelar</button>
+      </div>
     </div>
 
     <!-- Paste editor (hidden by default) -->
@@ -897,20 +908,20 @@ Martes
     </div>
   </div>
 
-  <div class="section" style="padding-top:14px">
-    <div class="section-label">Consejos clave</div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;">
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:var(--muted);line-height:1.5;">
-        <div>🐌 Comer despacio, mínimo <strong style="color:var(--text)">20 min</strong></div>
-        <div>💧 Beber <strong style="color:var(--text)">2–2,5 L</strong> agua al día</div>
-        <div>🚶 Paseo diario después del trabajo</div>
-        <div>😴 Dormir antes de las <strong style="color:var(--text)">22:30</strong>, mínimo 7h</div>
-        <div>🍫 Comida libre sábado (moderada)</div>
-        <div>⏳ Constancia mínima <strong style="color:var(--text)">3 meses</strong></div>
+  <div style="padding: 14px 16px 0">
+    <div onclick="showView('historico')" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;user-select:none;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px">📆</span>
+        <div>
+          <div style="font-size:13px;font-weight:600">Histórico de días</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">Ver qué hiciste cada día</div>
+        </div>
       </div>
+      <span style="color:var(--accent);font-size:18px">›</span>
     </div>
   </div>
-  <div style="padding: 14px 16px 0">
+
+  <div style="padding: 10px 16px 0">
     <div onclick="showView('peso')" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;user-select:none;">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:20px">⚖️</span>
@@ -970,12 +981,21 @@ Martes
   </div>
 </div>
 
+<!-- VIEW: HISTÓRICO -->
+<div class="view" id="view-historico">
+  <div class="section" style="padding-top:14px">
+    <button onclick="showView('stats')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px;">‹ Volver</button>
+    <div class="section-label">Histórico de días</div>
+    <div id="historicoList"></div>
+  </div>
+</div>
+
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const TASKS = {
   manana: [
     { id: 'm1', emoji: '💧', time: '06:00', task: 'Vaso de agua + luz natural' },
-    { id: 'm2', emoji: '🧘', time: '06:10', task: 'Movilidad / activación' },
+    { id: 'm2', emoji: '🧘', time: '06:10', task: 'Meditación' },
     { id: 'm3', emoji: '🏋️', time: '06:20–07:10', task: 'Entrenamiento fuerza + cardio' },
     { id: 'm4', emoji: '🌬️', time: '07:10–07:25', task: 'Estiramientos + respiración' },
     { id: 'm5', emoji: '🚿', time: '07:30–08:30', task: 'Ducha, vestirse, hidratación' },
@@ -991,12 +1011,13 @@ const TASKS = {
   ],
   atardecer: [
     { id: 'a1', emoji: '🚶', time: '18:00–19:00', task: 'Paseo 8.000–10.000 pasos' },
-    { id: 'a2', emoji: '🫖', time: '19:30–20:00', task: 'Agua o infusión ligera' },
+    { id: 'a2', emoji: '🫖', time: '19:30–20:00', task: 'Agua o infusión ligera 300ml' },
   ],
   noche: [
     { id: 'n1', emoji: '🥗', time: '20:30–21:00', task: 'Cena: proteína + verduras' },
     { id: 'n2', emoji: '📖', time: '21:00–21:30', task: 'Relajación: infusión, lectura' },
     { id: 'n3', emoji: '🪨', time: '21:30', task: 'Suplemento: Magnesio 200–400mg' },
+    { id: 'n5', emoji: '💊', time: '21:30', task: 'Suplemento: B12' },
     { id: 'n4', emoji: '😴', time: '22:00–22:30', task: 'Dormir 7–8h' },
   ],
 };
@@ -1270,7 +1291,148 @@ function saveEjercicio() {
   renderEjercicio();
 }
 
-// ── MENU SEMANAS ──────────────────────────────────────────────────────────────
+// ── HISTÓRICO ─────────────────────────────────────────────────────────────────
+function renderHistorico() {
+  const s = getState();
+  const list = document.getElementById('historicoList');
+  list.innerHTML = '';
+
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  const total = allTasks.length;
+  const keys = Object.keys(s).filter(k => s[k] && s[k].checked).sort().reverse();
+
+  if (keys.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px 0">Aún no hay días registrados.</div>';
+    return;
+  }
+
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  keys.forEach(k => {
+    const checked = s[k].checked || {};
+    const done = allTasks.filter(t => !!checked[t.id]).length;
+    const pct = Math.round((done / total) * 100);
+    const parts = k.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+    const dateLabel = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    const dayName = dayNames[d.getDay()];
+    const barColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--accent)' : 'var(--gold)';
+
+    const card = document.createElement('div');
+    card.dataset.key = k;
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;';
+
+    // Header row
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer;';
+    header.innerHTML = `
+      <div>
+        <span style="font-size:12px;font-weight:700;color:var(--accent)">${dayName}</span>
+        <span style="font-size:12px;color:var(--muted);margin-left:6px">${dateLabel}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="hist-count" style="font-size:13px;font-weight:700;color:${barColor}">${done}/${total} · ${pct}%</span>
+        <span class="hist-arrow" style="color:var(--muted);font-size:12px;">▼</span>
+      </div>`;
+    header.addEventListener('click', () => histToggleCard(card));
+
+    // Bar
+    const barWrap = document.createElement('div');
+    barWrap.style.cssText = 'height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;cursor:pointer;';
+    const barFill = document.createElement('div');
+    barFill.className = 'hist-bar';
+    barFill.style.cssText = `height:100%;width:${pct}%;background:${barColor};border-radius:99px;`;
+    barWrap.appendChild(barFill);
+    barWrap.addEventListener('click', () => histToggleCard(card));
+
+    // Detail panel
+    const detail = document.createElement('div');
+    detail.className = 'hist-detail';
+    detail.style.display = 'none';
+
+    card.appendChild(header);
+    card.appendChild(barWrap);
+    card.appendChild(detail);
+    list.appendChild(card);
+  });
+}
+
+function histToggleCard(card) {
+  const detail = card.querySelector('.hist-detail');
+  const isOpen = detail.style.display !== 'none';
+  if (isOpen) {
+    detail.style.display = 'none';
+    card.querySelector('.hist-arrow').textContent = '▼';
+    return;
+  }
+  detail.style.display = 'block';
+  card.querySelector('.hist-arrow').textContent = '▲';
+  histRenderDetail(card);
+}
+
+function histRenderDetail(card) {
+  const k = card.dataset.key;
+  const s = getState();
+  const checked = (s[k] && s[k].checked) ? s[k].checked : {};
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  const detail = card.querySelector('.hist-detail');
+
+  detail.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:4px;';
+
+  allTasks.forEach(t => {
+    const isDone = !!checked[t.id];
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;background:${isDone ? 'rgba(52,211,153,0.07)' : 'transparent'};border:1px solid ${isDone ? 'rgba(52,211,153,0.2)' : 'transparent'};`;
+    row.innerHTML = `
+      <div style="width:22px;height:22px;border-radius:7px;border:2px solid ${isDone ? 'var(--green)' : 'var(--border)'};background:${isDone ? 'var(--green)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:#0d0a0f;">${isDone ? '✓' : ''}</div>
+      <span style="font-size:12px;color:${isDone ? 'var(--text)' : 'var(--muted)'};">${t.emoji} ${t.task}</span>
+    `;
+    row.addEventListener('click', () => histToggleTask(card, t.id));
+    wrap.appendChild(row);
+  });
+
+  detail.appendChild(wrap);
+}
+
+function histToggleTask(card, taskId) {
+  const k = card.dataset.key;
+  const s = getState();
+  if (!s[k]) s[k] = { checked: {} };
+  if (!s[k].checked) s[k].checked = {};
+  s[k].checked[taskId] = !s[k].checked[taskId];
+  saveState(s);
+
+  // Update bar and count on card
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  const total = allTasks.length;
+  const checked = s[k].checked;
+  const done = allTasks.filter(t => !!checked[t.id]).length;
+  const pct = Math.round((done / total) * 100);
+  const barColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--accent)' : 'var(--gold)';
+
+  card.querySelector('.hist-bar').style.width = pct + '%';
+  card.querySelector('.hist-bar').style.background = barColor;
+  card.querySelector('.hist-count').textContent = `${done}/${total} · ${pct}%`;
+  card.querySelector('.hist-count').style.color = barColor;
+
+  // If this is today, also refresh the Hoy tab
+  if (k === todayKey()) {
+    renderChecklist('manana');
+    renderChecklist('tarde');
+    renderChecklist('atardecer');
+    renderChecklist('noche');
+    updateProgress();
+  }
+
+  // Re-render detail
+  histRenderDetail(card);
+  updateStats();
+}
+
+
 let currentMenuWeek = 0; // index into semanas array
 
 function getMenuSemanas() {
@@ -1316,6 +1478,28 @@ function renderMenu() {
     `;
     list.appendChild(el);
   });
+}
+
+function showDeleteConfirm() {
+  const semanas = getMenuSemanas();
+  if (semanas.length === 0) return;
+  document.getElementById('deleteConfirmLabel').textContent = `Se borrará "${semanas[currentMenuWeek].label}" permanentemente.`;
+  document.getElementById('deleteConfirm').style.display = 'block';
+  document.getElementById('menuEditor').style.display = 'none';
+}
+
+function hideDeleteConfirm() {
+  document.getElementById('deleteConfirm').style.display = 'none';
+}
+
+function confirmDeleteWeek() {
+  const semanas = getMenuSemanas();
+  if (semanas.length === 0) return;
+  semanas.splice(currentMenuWeek, 1);
+  saveMenuSemanas(semanas);
+  currentMenuWeek = Math.max(0, currentMenuWeek - 1);
+  hideDeleteConfirm();
+  renderMenu();
 }
 
 function changeMenuWeek(dir) {
@@ -1566,9 +1750,17 @@ function showView(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'hoy') {
+    renderChecklist('manana');
+    renderChecklist('tarde');
+    renderChecklist('atardecer');
+    renderChecklist('noche');
+    updateProgress();
+  }
   if (name === 'semana') { renderEjercicio(); }
   if (name === 'stats') updateStats();
   if (name === 'peso') renderPeso();
+  if (name === 'historico') renderHistorico();
 }
 
 function switchTab(name, btn) {
