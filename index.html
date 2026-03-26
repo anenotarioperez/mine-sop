@@ -1094,8 +1094,11 @@ window.addEventListener('DOMContentLoaded', () => {
   renderChecklist('tarde');
   renderChecklist('atardecer');
   renderChecklist('noche');
-  renderWeekRow();
   renderEjercicio();
+  // Auto-navigate menu to current week on load
+  const semanas = getMenuSemanas();
+  const realIdx = getCurrentMenuWeekIndex();
+  currentMenuWeek = Math.min(realIdx, Math.max(0, semanas.length - 1));
   renderMenu();
   updateProgress();
   updateStats();
@@ -1627,7 +1630,9 @@ function renderMenu() {
 
   const semana = semanas[currentMenuWeek];
   const realWeekIdx = getCurrentMenuWeekIndex();
-  const isCurrentWeek = currentMenuWeek === Math.min(realWeekIdx, semanas.length - 1);
+  // This week's menu index: clamp to available semanas
+  const thisWeekMenuIdx = Math.min(realWeekIdx, semanas.length - 1);
+  const isCurrentWeek = currentMenuWeek === thisWeekMenuIdx;
   const todayName = getTodayDayName();
 
   // Label: show "Esta semana" if it's the current one
@@ -1936,7 +1941,10 @@ function showView(name, btn) {
   if (name === 'plan') {
     const semanas = getMenuSemanas();
     const realIdx = getCurrentMenuWeekIndex();
-    currentMenuWeek = Math.min(realIdx, Math.max(0, semanas.length - 1));
+    // Only auto-jump if user hasn't manually navigated away
+    if (currentMenuWeek === 0 || currentMenuWeek > semanas.length - 1) {
+      currentMenuWeek = Math.min(realIdx, Math.max(0, semanas.length - 1));
+    }
     renderMenu();
   }
   if (name === 'semana') { renderEjercicio(); }
