@@ -1596,6 +1596,20 @@ function saveMenuSemanas(arr) {
   localStorage.setItem('sopMenuSemanas', JSON.stringify(arr));
 }
 
+function getCurrentMenuWeekIndex() {
+  // Day 0 = 23 March 2026 (Monday)
+  const start = new Date('2026-03-23');
+  const now = new Date();
+  const diffDays = Math.floor((now - start) / 86400000);
+  if (diffDays < 0) return 0;
+  return Math.floor(diffDays / 7);
+}
+
+function getTodayDayName() {
+  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  return days[new Date().getDay()];
+}
+
 function renderMenu() {
   const semanas = getMenuSemanas();
 
@@ -1612,15 +1626,28 @@ function renderMenu() {
   if (currentMenuWeek < 0) currentMenuWeek = 0;
 
   const semana = semanas[currentMenuWeek];
-  document.getElementById('menuWeekLabel').textContent = semana.label;
+  const realWeekIdx = getCurrentMenuWeekIndex();
+  const isCurrentWeek = currentMenuWeek === Math.min(realWeekIdx, semanas.length - 1);
+  const todayName = getTodayDayName();
+
+  // Label: show "Esta semana" if it's the current one
+  const weekLabel = isCurrentWeek
+    ? `${semana.label} · <span style="color:var(--green);font-size:10px;">Esta semana ✓</span>`
+    : semana.label;
+  document.getElementById('menuWeekLabel').innerHTML = weekLabel;
 
   const list = document.getElementById('menuList');
   list.innerHTML = '';
   semana.dias.forEach(m => {
+    const isToday = isCurrentWeek && m.dia === todayName;
     const el = document.createElement('div');
     el.className = 'menu-day';
+    if (isToday) {
+      el.style.border = '1px solid rgba(192,132,252,0.5)';
+      el.style.background = 'rgba(192,132,252,0.07)';
+    }
     el.innerHTML = `
-      <div class="mday">${m.dia}</div>
+      <div class="mday" style="${isToday ? 'color:var(--accent2)' : ''}">${m.dia}${isToday ? ' <span style="font-size:11px;color:var(--green);font-weight:500;">· Hoy 👈</span>' : ''}</div>
       <div class="meal"><strong>🍽 Comida:</strong> ${m.comida}</div>
       <div class="meal"><strong>🌙 Cena:</strong> ${m.cena}</div>
       <div class="meal"><strong>🥜 Snack:</strong> ${m.snack}</div>
@@ -1905,6 +1932,12 @@ function showView(name, btn) {
     renderChecklist('atardecer');
     renderChecklist('noche');
     updateProgress();
+  }
+  if (name === 'plan') {
+    const semanas = getMenuSemanas();
+    const realIdx = getCurrentMenuWeekIndex();
+    currentMenuWeek = Math.min(realIdx, Math.max(0, semanas.length - 1));
+    renderMenu();
   }
   if (name === 'semana') { renderEjercicio(); }
   if (name === 'stats') updateStats();
