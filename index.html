@@ -934,6 +934,20 @@ Martes
     </div>
   </div>
 
+  <!-- BACKUP -->
+  <div style="padding: 10px 16px 14px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">💾 Copia de seguridad</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="exportData()" style="flex:1;padding:12px;border-radius:10px;background:var(--accent);border:none;color:#0d0a0f;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">⬆ Exportar</button>
+        <button onclick="document.getElementById('importInput').click()" style="flex:1;padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-weight:600;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">⬇ Importar</button>
+        <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;">Exporta para guardar en iCloud, Google Drive o donde quieras. Importa para restaurar desde ese archivo.</div>
+      <div id="importMsg" style="display:none;margin-top:8px;font-size:12px;font-weight:600;color:var(--green);">✅ Datos restaurados correctamente</div>
+    </div>
+  </div>
+
 </div>
 <div class="view" id="view-peso">
   <div class="section" style="padding-top:14px">
@@ -985,7 +999,22 @@ Martes
 <div class="view" id="view-historico">
   <div class="section" style="padding-top:14px">
     <button onclick="showView('stats')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px;">‹ Volver</button>
-    <div class="section-label">Histórico de días</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-label" style="margin:0">Histórico de días</div>
+      <button onclick="toggleAddPastDay()" id="addPastDayBtn" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--accent);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">+ Añadir día</button>
+    </div>
+
+    <!-- Add past day panel -->
+    <div id="addPastDayPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Selecciona una fecha y marca las tareas que hiciste ese día:</div>
+      <input type="date" id="pastDayDate" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;"/>
+      <div id="pastDayTasks" style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="savePastDay()" style="flex:1;padding:12px;border-radius:10px;background:var(--accent);border:none;color:#0d0a0f;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Guardar día</button>
+        <button onclick="toggleAddPastDay()" style="padding:12px 16px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+
     <div id="historicoList"></div>
   </div>
 </div>
@@ -1291,7 +1320,127 @@ function saveEjercicio() {
   renderEjercicio();
 }
 
-// ── HISTÓRICO ─────────────────────────────────────────────────────────────────
+// ── BACKUP ────────────────────────────────────────────────────────────────────
+function exportData() {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    sopState:       localStorage.getItem('sopState')       || '{}',
+    sopPesos:       localStorage.getItem('sopPesos')       || '[]',
+    sopMenuSemanas: localStorage.getItem('sopMenuSemanas') || '[]',
+    sopEjercicio:   localStorage.getItem('sopEjercicio')   || 'null',
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reto-sop-backup-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('Formato inválido');
+      if (data.sopState)       localStorage.setItem('sopState', data.sopState);
+      if (data.sopPesos)       localStorage.setItem('sopPesos', data.sopPesos);
+      if (data.sopMenuSemanas) localStorage.setItem('sopMenuSemanas', data.sopMenuSemanas);
+      if (data.sopEjercicio)   localStorage.setItem('sopEjercicio', data.sopEjercicio);
+
+      // Refresh everything
+      renderChecklist('manana');
+      renderChecklist('tarde');
+      renderChecklist('atardecer');
+      renderChecklist('noche');
+      updateProgress();
+      updateStats();
+      currentMenuWeek = 0;
+      renderMenu();
+
+      const msg = document.getElementById('importMsg');
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    } catch(err) {
+      alert('Error al importar: el archivo no es válido.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+
+
+// ── AÑADIR DÍA PASADO ────────────────────────────────────────────────────────
+const pastDayChecked = {};
+
+function toggleAddPastDay() {
+  const panel = document.getElementById('addPastDayPanel');
+  const btn   = document.getElementById('addPastDayBtn');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '+ Añadir día' : '✕ Cancelar';
+  if (!isOpen) {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    document.getElementById('pastDayDate').value = y.toISOString().split('T')[0];
+    renderPastDayTasks();
+  }
+}
+
+function renderPastDayTasks() {
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  const container = document.getElementById('pastDayTasks');
+  container.innerHTML = '';
+
+  const selRow = document.createElement('div');
+  selRow.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+  selRow.innerHTML = `
+    <button onclick="pastDaySelectAll(true)"  style="flex:1;padding:7px;border-radius:8px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:var(--green);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">✓ Todos</button>
+    <button onclick="pastDaySelectAll(false)" style="flex:1;padding:7px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">✕ Ninguno</button>
+  `;
+  container.appendChild(selRow);
+
+  allTasks.forEach(t => {
+    const done = !!pastDayChecked[t.id];
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;background:${done ? 'rgba(52,211,153,0.07)' : 'transparent'};border:1px solid ${done ? 'rgba(52,211,153,0.2)' : 'transparent'};`;
+    row.innerHTML = `
+      <div style="width:22px;height:22px;border-radius:7px;border:2px solid ${done ? 'var(--green)' : 'var(--border)'};background:${done ? 'var(--green)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:#0d0a0f;">${done ? '✓' : ''}</div>
+      <span style="font-size:12px;color:${done ? 'var(--text)' : 'var(--muted)'};">${t.emoji} ${t.task}</span>
+    `;
+    row.addEventListener('click', () => { pastDayChecked[t.id] = !pastDayChecked[t.id]; renderPastDayTasks(); });
+    container.appendChild(row);
+  });
+}
+
+function pastDaySelectAll(val) {
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  allTasks.forEach(t => pastDayChecked[t.id] = val);
+  renderPastDayTasks();
+}
+
+function savePastDay() {
+  const dateInput = document.getElementById('pastDayDate').value;
+  if (!dateInput) return;
+  const [year, month, day] = dateInput.split('-').map(Number);
+  const key = `${year}-${month - 1}-${day}`;
+  const s = getState();
+  if (!s[key]) s[key] = { checked: {} };
+  const allTasks = [...TASKS.manana, ...TASKS.tarde, ...TASKS.atardecer, ...TASKS.noche];
+  allTasks.forEach(t => { s[key].checked[t.id] = !!pastDayChecked[t.id]; });
+  saveState(s);
+  allTasks.forEach(t => pastDayChecked[t.id] = false);
+  toggleAddPastDay();
+  renderHistorico();
+  updateStats();
+}
+
 function renderHistorico() {
   const s = getState();
   const list = document.getElementById('historicoList');
